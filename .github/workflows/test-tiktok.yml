@@ -32,7 +32,7 @@ jobs:
           from TikTokLive import TikTokLiveClient
           from TikTokLive.events import ConnectEvent, EnvelopeEvent
 
-          USERNAME = "loupleking"
+          USERNAME = "_ttna208"
           SCAN_SECONDS = 720
 
           TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")

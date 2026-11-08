@@ -1,0 +1,29 @@
+name: Global TikTok Discovery V7
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  discovery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install TikTokLive==7.0.1 playwright==1.56.0
+          python -m playwright install --with-deps chromium
+
+      - name: Test global LIVE discovery
+        run: python -u discovery_v7.py

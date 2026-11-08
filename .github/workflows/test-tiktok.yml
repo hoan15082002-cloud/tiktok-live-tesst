@@ -21,7 +21,7 @@ jobs:
         run: |
           python - <<'PY'
           import asyncio
-          from TikTokLive import TikTokLiveClient
+          from TikTokLive.events import ConnectEvent, DisconnectEvent, CommentEvent, GiftEvent, EnvelopeEvent
           from TikTokLive.events import ConnectEvent, DisconnectEvent, CommentEvent, GiftEvent
 
           USERNAME = "loupleking"
@@ -43,6 +43,10 @@ jobs:
           @client.on(GiftEvent)
           async def on_gift(event):
               print("GIFT EVENT RECEIVED", flush=True)
+                        @client.on(EnvelopeEvent)
+          async def on_envelope(event):
+              print("TREASURE BOX EVENT DETECTED", flush=True)
+              print("EVENT DATA:", str(event)[:1500], flush=True)
 
           async def main():
               print("TESTING USER:", USERNAME, flush=True)

@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: python -m pip install TikTokLive==7.0.1 httpx
 
-      - name: Scan LIVE and notify Telegram
+      - name: Scan and analyze treasure boxes
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -32,11 +32,10 @@ jobs:
           from TikTokLive import TikTokLiveClient
           from TikTokLive.events import ConnectEvent, EnvelopeEvent
 
-          USERNAME = "_ttna208"
+          USERNAME = "loupleking"
           SCAN_SECONDS = 720
-
-          TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-          CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
+          TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+          CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 
           if not TOKEN or not CHAT_ID:
               raise RuntimeError("Missing Telegram GitHub Secrets")
@@ -52,18 +51,43 @@ jobs:
                           url,
                           data={"chat_id": CHAT_ID, "text": message}
                       )
-                      data = response.json()
-                      if response.status_code == 200 and data.get("ok"):
+                      result = response.json()
+                      if response.status_code == 200 and result.get("ok"):
                           print("TELEGRAM SENT", flush=True)
                       else:
-                          print(
-                              "TELEGRAM ERROR:",
-                              response.status_code,
-                              data.get("description", "Unknown error"),
-                              flush=True
-                          )
+                          print("TELEGRAM ERROR:", response.status_code,
+                                result.get("description", "Unknown error"), flush=True)
               except Exception as exc:
                   print("TELEGRAM REQUEST ERROR:", type(exc).__name__, flush=True)
+
+          def analyze_event(event):
+              info = getattr(event, "envelope_info", None)
+              print("=== ENVELOPE ANALYSIS ===", flush=True)
+              print("EVENT TYPE:", type(event).__name__, flush=True)
+
+              for source_name, source in [("event", event), ("envelope_info", info)]:
+                  if source is None:
+                      continue
+                  print("SOURCE:", source_name, flush=True)
+                  try:
+                      if hasattr(source, "model_dump"):
+                          fields = source.model_dump()
+                      elif hasattr(source, "__dict__"):
+                          fields = vars(source)
+                      else:
+                          fields = {}
+                      for key, value in fields.items():
+                          if any(word in key.lower() for word in (
+                              "coin", "diamond", "amount", "count",
+                              "total", "expire", "duration", "time",
+                              "deadline", "reward", "display", "status",
+                              "business_type", "envelope"
+                          )):
+                              print("FIELD:", key, "=", str(value)[:500], flush=True)
+                  except Exception as exc:
+                      print("ANALYSIS ERROR:", type(exc).__name__, flush=True)
+
+              print("=== END ANALYSIS ===", flush=True)
 
           @client.on(ConnectEvent)
           async def on_connect(event):
@@ -94,6 +118,8 @@ jobs:
               print("ENVELOPE ID:", envelope_id, flush=True)
               print("ROOM ID:", room_id, flush=True)
 
+              analyze_event(event)
+
               message = (
                   "TikTok LIVE - Phat hien su kien ruong/phong bao!\n\n"
                   f"Chu phong: @{USERNAME}\n"
@@ -108,19 +134,11 @@ jobs:
           async def main():
               print("START SCANNING:", USERNAME, flush=True)
               try:
-                  await asyncio.wait_for(
-                      client.start(),
-                      timeout=SCAN_SECONDS
-                  )
+                  await asyncio.wait_for(client.start(), timeout=SCAN_SECONDS)
               except asyncio.TimeoutError:
                   print("SCAN FINISHED: 12 MINUTES", flush=True)
               except Exception as exc:
-                  print(
-                      "SCAN ERROR:",
-                      type(exc).__name__,
-                      str(exc)[:300],
-                      flush=True
-                  )
+                  print("SCAN ERROR:", type(exc).__name__, str(exc)[:300], flush=True)
               finally:
                   try:
                       await client.disconnect()

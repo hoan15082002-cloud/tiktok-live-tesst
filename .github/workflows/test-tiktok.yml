@@ -1,4 +1,4 @@
-name: Test TikTokLive
+name: Test TikTok LIVE WebSocket
 
 on:
   workflow_dispatch:
@@ -7,6 +7,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+
     steps:
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -16,29 +17,46 @@ jobs:
       - name: Install TikTokLive
         run: python -m pip install TikTokLive==7.0.1
 
-      - name: Test connection
+      - name: Test WebSocket and LIVE events
         run: |
           python - <<'PY'
           import asyncio
-          import httpx
           from TikTokLive import TikTokLiveClient
+          from TikTokLive.events import ConnectEvent, DisconnectEvent, CommentEvent, GiftEvent
+
+          USERNAME = "banaking922"
+          client = TikTokLiveClient(unique_id=USERNAME)
+
+          @client.on(ConnectEvent)
+          async def on_connect(event):
+              print("WEBSOCKET CONNECTED", flush=True)
+              print("ROOM ID:", client.room_id, flush=True)
+
+          @client.on(DisconnectEvent)
+          async def on_disconnect(event):
+              print("WEBSOCKET DISCONNECTED", flush=True)
+
+          @client.on(CommentEvent)
+          async def on_comment(event):
+              print("COMMENT EVENT RECEIVED", flush=True)
+
+          @client.on(GiftEvent)
+          async def on_gift(event):
+              print("GIFT EVENT RECEIVED", flush=True)
 
           async def main():
-              username = 'banaking922'
-              async with httpx.AsyncClient(follow_redirects=True, timeout=15) as http:
-                  r = await http.get(f'https://www.tiktok.com/@{username}/live')
-                  print('HTTP STATUS:', r.status_code)
-                  print('FINAL PATH:', r.url.path)
-                  print('REDIRECTS:', [x.status_code for x in r.history])
-              client = TikTokLiveClient(unique_id=username)
+              print("TESTING USER:", USERNAME, flush=True)
               try:
-                  print('ROOM ID:', await client._web.fetch_room_id_from_html(username))
-              except Exception as e:
-                  print('HTML ERROR:', type(e).__name__, str(e)[:200])
-              try:
-                  print('IS LIVE:', await client.is_live())
-              except Exception as e:
-                  print('API ERROR:', type(e).__name__, str(e)[:200])
+                  await asyncio.wait_for(client.start(), timeout=90)
+              except asyncio.TimeoutError:
+                  print("TEST FINISHED: 90 SECOND TIMEOUT", flush=True)
+              except Exception as exc:
+                  print("TEST ERROR:", type(exc).__name__, str(exc)[:500], flush=True)
+              finally:
+                  try:
+                      await client.disconnect()
+                  except Exception:
+                      pass
 
           asyncio.run(main())
           PY

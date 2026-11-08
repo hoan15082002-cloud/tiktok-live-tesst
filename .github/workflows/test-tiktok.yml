@@ -24,7 +24,7 @@ jobs:
           from TikTokLive import TikTokLiveClient
           from TikTokLive.events import ConnectEvent, DisconnectEvent, CommentEvent, GiftEvent, EnvelopeEvent
 
-          USERNAME = "13050804n"
+          USERNAME = "apple_snow52"
           client = TikTokLiveClient(unique_id=USERNAME)
 
           @client.on(ConnectEvent)

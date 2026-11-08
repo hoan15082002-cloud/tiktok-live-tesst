@@ -8,8 +8,8 @@ permissions:
 
 jobs:
   discovery:
-    runs-on: ubuntu-latest
-    timeout-minutes: 8
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
 
     steps:
       - name: Checkout repository

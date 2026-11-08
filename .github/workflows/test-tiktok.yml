@@ -17,12 +17,12 @@ jobs:
       - name: Install TikTokLive
         run: python -m pip install TikTokLive==7.0.1
 
-      - name: Test WebSocket and LIVE events
+      - name: Test WebSocket and Treasure Box
         run: |
           python - <<'PY'
           import asyncio
+          from TikTokLive import TikTokLiveClient
           from TikTokLive.events import ConnectEvent, DisconnectEvent, CommentEvent, GiftEvent, EnvelopeEvent
-          from TikTokLive.events import ConnectEvent, DisconnectEvent, CommentEvent, GiftEvent
 
           USERNAME = "loupleking"
           client = TikTokLiveClient(unique_id=USERNAME)
@@ -43,7 +43,8 @@ jobs:
           @client.on(GiftEvent)
           async def on_gift(event):
               print("GIFT EVENT RECEIVED", flush=True)
-                        @client.on(EnvelopeEvent)
+
+          @client.on(EnvelopeEvent)
           async def on_envelope(event):
               print("TREASURE BOX EVENT DETECTED", flush=True)
               print("EVENT DATA:", str(event)[:1500], flush=True)

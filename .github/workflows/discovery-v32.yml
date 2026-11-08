@@ -1,4 +1,4 @@
-name: TikTok Following Discovery V3.2
+name: TikTok Following Discovery V3.3
 
 on:
   workflow_dispatch:
@@ -25,5 +25,14 @@ jobs:
           python -m pip install playwright==1.56.0
           python -m playwright install --with-deps chromium
 
-      - name: Test Following discovery
+      - name: Diagnose Following
         run: python -u discovery_v32.py
+
+      - name: Upload diagnostic report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: following-diagnostic-v33
+          path: discovery_report/
+          if-no-files-found: warn
+          retention-days: 1
